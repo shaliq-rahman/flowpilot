@@ -93,7 +93,7 @@ export default function MilestoneForm({ open, onClose, onSuccess, projectId, def
         <DialogHeader>
           <DialogTitle
             className="text-lg"
-            style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', color: 'var(--pm-text)' }}
+            style={{ fontFamily: 'var(--font-sans)', color: 'var(--pm-text)' }}
           >
             {milestoneId ? 'Edit Milestone' : 'New Milestone'}
           </DialogTitle>

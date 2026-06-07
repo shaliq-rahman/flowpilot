@@ -43,7 +43,7 @@ export default function RegisterPage() {
     <div>
       <h1
         className="text-3xl mb-1.5"
-        style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', color: 'var(--pm-text)', fontWeight: 400 }}
+        style={{ fontFamily: 'var(--font-sans)', color: 'var(--pm-text)', fontWeight: 400 }}
       >
         Create account
       </h1>

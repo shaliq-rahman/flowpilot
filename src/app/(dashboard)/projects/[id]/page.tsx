@@ -111,7 +111,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: project.color }} />
               <h1
                 className="text-[2.2rem] leading-none"
-                style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontWeight: 400, color: 'var(--pm-text)' }}
+                style={{ fontFamily: 'var(--font-sans)', fontWeight: 400, color: 'var(--pm-text)' }}
               >
                 {project.name}
               </h1>

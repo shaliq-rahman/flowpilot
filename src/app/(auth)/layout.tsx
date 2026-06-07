@@ -38,7 +38,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             </div>
             <span
               className="text-white text-lg font-semibold tracking-tight"
-              style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic' }}
+              style={{ fontFamily: 'var(--font-sans)' }}
             >
               FlowPilot
             </span>
@@ -48,7 +48,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           <div className="py-16">
             <h2
               className="text-5xl leading-[1.1] mb-5 text-white"
-              style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontWeight: 300 }}
+              style={{ fontFamily: 'var(--font-sans)', fontWeight: 300 }}
             >
               Navigate every<br />
               project with<br />
@@ -67,7 +67,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               { value: '∞', label: 'Projects' },
             ].map(({ value, label }) => (
               <div key={label} className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)' }}>
-                <p className="text-2xl font-bold text-white mb-0.5" style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic' }}>
+                <p className="text-2xl font-bold text-white mb-0.5" style={{ fontFamily: 'var(--font-sans)' }}>
                   {value}
                 </p>
                 <p className="text-[10px] font-semibold tracking-widest uppercase" style={{ color: 'rgba(255,255,255,0.45)' }}>
@@ -86,7 +86,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             <Logo />
             <span
               className="text-lg font-semibold"
-              style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', color: 'var(--pm-text)' }}
+              style={{ fontFamily: 'var(--font-sans)', color: 'var(--pm-text)' }}
             >
               FlowPilot
             </span>

@@ -58,7 +58,7 @@ export default function Sidebar({ userEmail, userName }: SidebarProps) {
         <Logo />
         <span
           className="text-[15px] font-semibold tracking-tight"
-          style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', color: 'var(--pm-text)' }}
+          style={{ fontFamily: 'var(--font-sans)', color: 'var(--pm-text)' }}
         >
           FlowPilot
         </span>

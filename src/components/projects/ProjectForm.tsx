@@ -95,7 +95,7 @@ export default function ProjectForm({ open, onClose, onSuccess, defaultValues, p
         <DialogHeader>
           <DialogTitle
             className="text-lg"
-            style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', color: 'var(--pm-text)' }}
+            style={{ fontFamily: 'var(--font-sans)', color: 'var(--pm-text)' }}
           >
             {projectId ? 'Edit Project' : 'New Project'}
           </DialogTitle>

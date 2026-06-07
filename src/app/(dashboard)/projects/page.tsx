@@ -31,7 +31,7 @@ export default function ProjectsPage() {
         <div>
           <h1
             className="text-[2.6rem] leading-none mb-2"
-            style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontWeight: 400, color: 'var(--pm-text)' }}
+            style={{ fontFamily: 'var(--font-sans)', fontWeight: 400, color: 'var(--pm-text)' }}
           >
             Projects
           </h1>

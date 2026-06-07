@@ -97,7 +97,7 @@ export default function TaskForm({ open, onClose, onSuccess, projectId, defaultV
         <DialogHeader>
           <DialogTitle
             className="text-lg"
-            style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', color: 'var(--pm-text)' }}
+            style={{ fontFamily: 'var(--font-sans)', color: 'var(--pm-text)' }}
           >
             {taskId ? 'Edit Task' : 'New Task'}
           </DialogTitle>
