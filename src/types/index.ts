@@ -1,4 +1,15 @@
 export type ProjectStatus = 'planning' | 'active' | 'on_hold' | 'completed' | 'cancelled'
+
+export interface Document {
+  id: string
+  project_id: string
+  uploaded_by: string
+  name: string
+  file_path: string
+  file_type: string
+  file_size: number
+  created_at: string
+}
 export type TaskStatus = 'backlog' | 'todo' | 'in_progress' | 'in_review' | 'done' | 'cancelled'
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent'
 export type MilestoneStatus = 'upcoming' | 'at_risk' | 'completed' | 'missed'

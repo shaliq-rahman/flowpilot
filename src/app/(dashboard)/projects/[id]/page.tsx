@@ -2,7 +2,7 @@
 
 import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
-import { Project, Task, Milestone } from '@/types'
+import { Project, Task, Milestone, Document } from '@/types'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { ArrowLeft, MoreHorizontal, Pencil, Trash2, Sparkles } from 'lucide-react'
 import Link from 'next/link'
@@ -13,13 +13,14 @@ import MilestoneList from '@/components/milestones/MilestoneList'
 import TimelineView from '@/components/timeline/TimelineView'
 import ProjectForm from '@/components/projects/ProjectForm'
 import AIAssistantPanel from '@/components/ai/AIAssistantPanel'
+import DocumentList from '@/components/documents/DocumentList'
 
 const STATUS_COLORS: Record<string, string> = {
   planning: '#6B7280', active: '#2563EB', on_hold: '#D97706',
   completed: '#16A34A', cancelled: '#DC2626',
 }
 
-const TABS = ['tasks', 'milestones', 'timeline'] as const
+const TABS = ['tasks', 'milestones', 'timeline', 'documents'] as const
 type Tab = typeof TABS[number]
 
 export default function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -28,18 +29,23 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [project, setProject] = useState<Project | null>(null)
   const [tasks, setTasks] = useState<Task[]>([])
   const [milestones, setMilestones] = useState<Milestone[]>([])
+  const [documents, setDocuments] = useState<Document[]>([])
   const [loading, setLoading] = useState(true)
   const [editOpen, setEditOpen] = useState(false)
   const [aiOpen, setAiOpen] = useState(false)
   const [tab, setTab] = useState<Tab>('tasks')
 
   async function loadProject() {
-    const res = await fetch(`/api/projects/${id}`)
-    if (!res.ok) { router.push('/projects'); return }
-    const data = await res.json()
+    const [projRes, docsRes] = await Promise.all([
+      fetch(`/api/projects/${id}`),
+      fetch(`/api/documents?project_id=${id}`),
+    ])
+    if (!projRes.ok) { router.push('/projects'); return }
+    const data = await projRes.json()
     setProject(data)
     setTasks(Array.isArray(data.tasks) ? data.tasks : [])
     setMilestones(Array.isArray(data.milestones) ? data.milestones : [])
+    if (docsRes.ok) setDocuments(await docsRes.json())
     setLoading(false)
   }
 
@@ -90,6 +96,13 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     { label: 'Milestones', value: milestones.length, note: `${doneMilestones} done` },
     { label: 'Deadline', value: formatDate(project.end_date), note: formatDate(project.start_date) },
   ]
+
+  const tabLabels: Record<Tab, string> = {
+    tasks: `Tasks (${tasks.length})`,
+    milestones: `Milestones (${milestones.length})`,
+    timeline: 'Timeline',
+    documents: `Documents (${documents.length})`,
+  }
 
   return (
     <div className="p-10 max-w-5xl mx-auto">
@@ -187,12 +200,9 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       </div>
 
       {/* Tab bar */}
-      <div className="flex items-center gap-1 mb-6">
+      <div className="flex items-center gap-1 mb-6 flex-wrap">
         {TABS.map((t) => {
           const active = tab === t
-          const label = t === 'tasks' ? `Tasks (${tasks.length})`
-            : t === 'milestones' ? `Milestones (${milestones.length})`
-            : 'Timeline'
           return (
             <button
               key={t}
@@ -205,7 +215,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                 boxShadow: active ? 'var(--pm-shadow-xs)' : 'none',
               }}
             >
-              {label}
+              {tabLabels[t]}
             </button>
           )
         })}
@@ -218,6 +228,12 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
         <div className="rounded-2xl p-6 bg-white" style={{ border: '1px solid var(--pm-border)' }}>
           <p className="text-sm font-semibold mb-6" style={{ color: 'var(--pm-text)' }}>Timeline</p>
           <TimelineView project={project} tasks={tasks} milestones={milestones} />
+        </div>
+      )}
+      {tab === 'documents' && (
+        <div className="rounded-2xl p-6 bg-white" style={{ border: '1px solid var(--pm-border)' }}>
+          <p className="text-sm font-semibold mb-6" style={{ color: 'var(--pm-text)' }}>Documents</p>
+          <DocumentList projectId={id} initialDocs={documents} />
         </div>
       )}
 
