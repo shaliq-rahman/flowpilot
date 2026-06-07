@@ -1,26 +1,140 @@
 @import "tailwindcss";
 
+/* ── Design Tokens ─────────────────────────────────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* shadcn required */
+  --background: 220 30% 97%;
+  --foreground: 222 30% 12%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 30% 12%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 30% 12%;
+  --primary: 224 72% 55%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 220 20% 94%;
+  --secondary-foreground: 222 20% 20%;
+  --muted: 220 20% 94%;
+  --muted-foreground: 220 12% 46%;
+  --accent: 220 20% 94%;
+  --accent-foreground: 222 20% 20%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 220 18% 88%;
+  --input: 220 18% 88%;
+  --ring: 224 72% 55%;
+  --radius: 0.625rem;
+
+  /* FlowPilot Blue theme */
+  --pm-bg:           #F3F6FD;
+  --pm-bg-subtle:    #E6EDF8;
+  --pm-sidebar:      #FFFFFF;
+  --pm-sidebar-hover: #F0F4FF;
+  --pm-sidebar-active: #EAF0FF;
+  --pm-sidebar-border: #E4EBF5;
+  --pm-accent:       #2C52D8;
+  --pm-accent-dark:  #1E3EAE;
+  --pm-accent-light: #EAF0FF;
+  --pm-accent-glow:  rgba(44, 82, 216, 0.14);
+  --pm-card:         #FFFFFF;
+  --pm-border:       #E2EAF4;
+  --pm-border-mid:   #C8D4EC;
+  --pm-text:         #1A2340;
+  --pm-text-2:       #5B6B87;
+  --pm-text-3:       #94A3B8;
+  --pm-success:      #16A34A;
+  --pm-warning:      #D97706;
+  --pm-error:        #DC2626;
+
+  /* Shadows */
+  --pm-shadow-xs: 0 1px 3px rgba(30,62,174,0.06);
+  --pm-shadow-sm: 0 2px 8px rgba(30,62,174,0.08), 0 1px 2px rgba(30,62,174,0.04);
+  --pm-shadow-md: 0 6px 20px rgba(30,62,174,0.10), 0 2px 6px rgba(30,62,174,0.05);
+  --pm-shadow-lg: 0 16px 48px rgba(30,62,174,0.12), 0 4px 12px rgba(30,62,174,0.06);
+
+  /* Fonts */
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-sans:    'Outfit', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* ── Base ──────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--pm-bg);
+  color: var(--pm-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
 }
+
+/* ── Helpers ───────────────────────────────────────────────── */
+.stat-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────── */
+::-webkit-scrollbar          { width: 4px; height: 4px; }
+::-webkit-scrollbar-track    { background: transparent; }
+::-webkit-scrollbar-thumb    { background: var(--pm-border-mid); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--pm-text-3); }
+
+/* ── Focus ─────────────────────────────────────────────────── */
+*:focus-visible { outline: 2px solid var(--pm-accent); outline-offset: 2px; }
+
+/* ── Selection ─────────────────────────────────────────────── */
+::selection { background: var(--pm-accent-light); color: var(--pm-accent-dark); }
+
+/* ── Progress bar ──────────────────────────────────────────── */
+[role="progressbar"] > div { background-color: var(--pm-accent) !important; }
+
+/* ── Server-safe hover rows ────────────────────────────────── */
+.fp-project-row:hover { background: var(--pm-bg) !important; }
+.fp-overdue-row:hover { background: #FEF9F9 !important; }
+.fp-link-view:hover   { color: var(--pm-accent) !important; }
+
+/* ── Animations ────────────────────────────────────────────── */
+@keyframes fp-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fp-in   { animation: fp-in 0.4s ease both; }
+.fp-in-1 { animation: fp-in 0.4s 0.06s ease both; }
+.fp-in-2 { animation: fp-in 0.4s 0.12s ease both; }
+.fp-in-3 { animation: fp-in 0.4s 0.18s ease both; }
+.fp-in-4 { animation: fp-in 0.4s 0.24s ease both; }
+
+/* ── Primary button ────────────────────────────────────────── */
+.fp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s, box-shadow 0.15s;
+  border: none;
+  outline: none;
+}
+.fp-btn-amber {
+  background: var(--pm-accent);
+  color: #fff;
+  box-shadow: 0 2px 8px var(--pm-accent-glow);
+}
+.fp-btn-amber:hover:not(:disabled) {
+  opacity: 0.88;
+  box-shadow: 0 4px 16px var(--pm-accent-glow);
+}
+.fp-btn-amber:active:not(:disabled) { transform: scale(0.98); }
+.fp-btn-amber:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.fp-btn-ghost {
+  background: transparent;
+  border: 1px solid var(--pm-border);
+  color: var(--pm-text-2);
+}
+.fp-btn-ghost:hover:not(:disabled) { border-color: var(--pm-border-mid); color: var(--pm-text); }
