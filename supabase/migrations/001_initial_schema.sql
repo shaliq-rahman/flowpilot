@@ -97,9 +97,7 @@ create policy "Owners can delete projects" on public.projects for delete using (
 
 -- project_members
 create policy "Members can view project membership" on public.project_members for select
-  using (user_id = auth.uid() or exists (
-    select 1 from public.project_members pm2 where pm2.project_id = project_members.project_id and pm2.user_id = auth.uid()
-  ));
+  using (user_id = auth.uid());
 create policy "Owners and admins can manage members" on public.project_members for all
   using (exists (
     select 1 from public.projects p where p.id = project_members.project_id
