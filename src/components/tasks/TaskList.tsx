@@ -13,9 +13,9 @@ const PRIORITY_COLORS: Record<string, string> = {
 }
 
 const COLUMNS = [
-  { id: 'pending',     label: 'Pending',     statuses: ['backlog', 'todo'],              color: '#6B7280', bg: '#F3F4F6' },
-  { id: 'inprogress',  label: 'In Progress', statuses: ['in_progress', 'in_review'],    color: '#7C3AED', bg: '#F5F3FF' },
-  { id: 'completed',   label: 'Completed',   statuses: ['done'],                        color: '#16A34A', bg: '#F0FDF4' },
+  { id: 'pending',    label: 'Pending',     statuses: ['backlog', 'todo'],           color: '#6B7280', bg: '#F3F4F6' },
+  { id: 'inprogress', label: 'In Progress', statuses: ['in_progress', 'in_review'],  color: '#7C3AED', bg: '#F5F3FF' },
+  { id: 'completed',  label: 'Completed',   statuses: ['done'],                      color: '#16A34A', bg: '#F0FDF4' },
 ]
 
 const DROP_STATUS: Record<string, string> = {
@@ -34,8 +34,8 @@ export default function TaskList({ tasks: initialTasks, projectId, onUpdate, isA
   const [formOpen, setFormOpen] = useState(false)
   const [editTask, setEditTask] = useState<Task | null>(null)
   const [view, setView] = useState<'board' | 'list'>('board')
-  const [dragging, setDragging] = useState<string | null>(null)
-  const [dragOver, setDragOver] = useState<string | null>(null)
+  const [draggingId, setDraggingId] = useState<string | null>(null)
+  const [dragOverCol, setDragOverCol] = useState<string | null>(null)
 
   async function updateTask(id: string, patch: Partial<Task>) {
     const res = await fetch(`/api/tasks/${id}`, {
@@ -65,36 +65,46 @@ export default function TaskList({ tasks: initialTasks, projectId, onUpdate, isA
     onUpdate()
   }
 
-  async function onDrop(colId: string) {
-    if (!dragging || !isAdmin) return
+  async function handleDrop(colId: string) {
+    if (!draggingId) return
     const newStatus = DROP_STATUS[colId]
-    const task = tasks.find(t => t.id === dragging)
-    if (!task || task.status === newStatus) { setDragging(null); setDragOver(null); return }
+    const task = tasks.find(t => t.id === draggingId)
+    if (!task || task.status === newStatus) { setDraggingId(null); setDragOverCol(null); return }
     const patch: Partial<Task> = { status: newStatus as Task['status'] }
     if (newStatus === 'done') patch.completion_pct = 100
-    await updateTask(dragging, patch)
-    setDragging(null)
-    setDragOver(null)
+    // Optimistically update UI immediately for smooth feel
+    setTasks(prev => prev.map(t => t.id === draggingId ? { ...t, ...patch } : t))
+    setDraggingId(null)
+    setDragOverCol(null)
+    const res = await fetch(`/api/tasks/${draggingId}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(patch),
+    })
+    if (res.ok) { onUpdate() }
+    else { toast.error('Failed to move task'); setTasks(prev => prev.map(t => t.id === task.id ? task : t)) }
   }
 
-  function TaskCard({ task }: { task: Task }) {
+  // Render card as a function (not a nested component) to avoid remount on every render
+  function renderCard(task: Task) {
     const priorityColor = PRIORITY_COLORS[task.priority] ?? '#6B7280'
     const done = task.status === 'done'
-    const overdue = task.due_date && isOverdue(task.due_date) && !done
+    const overdue = !!(task.due_date && isOverdue(task.due_date) && !done)
 
     return (
       <div
+        key={task.id}
         draggable={isAdmin}
-        onDragStart={() => setDragging(task.id)}
-        onDragEnd={() => { setDragging(null); setDragOver(null) }}
-        className="rounded-xl p-3.5 transition-all"
+        onDragStart={(e) => { e.stopPropagation(); setDraggingId(task.id) }}
+        onDragEnd={() => { setDraggingId(null); setDragOverCol(null) }}
+        className="rounded-xl p-3.5 select-none"
         style={{
           background: '#fff',
           border: '1px solid var(--pm-border)',
           borderLeft: `3px solid ${priorityColor}`,
-          opacity: dragging === task.id ? 0.4 : 1,
+          opacity: draggingId === task.id ? 0.35 : 1,
           cursor: isAdmin ? 'grab' : 'default',
           boxShadow: 'var(--pm-shadow-xs)',
+          transition: 'opacity 0.15s',
         }}
       >
         <div className="flex items-start justify-between gap-2">
@@ -156,7 +166,6 @@ export default function TaskList({ tasks: initialTasks, projectId, onUpdate, isA
           )}
         </div>
 
-        {/* Progress bar */}
         <div className="flex items-center gap-2 mt-2">
           <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: 'var(--pm-bg-subtle)' }}>
             <div className="h-full rounded-full transition-all" style={{ width: `${task.completion_pct}%`, background: done ? '#16A34A' : 'var(--pm-accent)' }} />
@@ -164,7 +173,6 @@ export default function TaskList({ tasks: initialTasks, projectId, onUpdate, isA
           <span className="text-[10px] w-6 text-right" style={{ color: 'var(--pm-text-3)' }}>{Math.round(task.completion_pct)}%</span>
         </div>
 
-        {/* Move buttons for non-drag (mobile friendly) */}
         {isAdmin && (
           <div className="flex gap-1 mt-2.5">
             {COLUMNS.filter(c => !c.statuses.includes(task.status)).map(col => (
@@ -191,28 +199,21 @@ export default function TaskList({ tasks: initialTasks, projectId, onUpdate, isA
       {/* Toolbar */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-1.5 p-1 rounded-xl" style={{ background: 'var(--pm-bg)', border: '1px solid var(--pm-border)' }}>
-          <button
-            onClick={() => setView('board')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-            style={{
-              background: view === 'board' ? '#fff' : 'transparent',
-              color: view === 'board' ? 'var(--pm-text)' : 'var(--pm-text-3)',
-              boxShadow: view === 'board' ? 'var(--pm-shadow-xs)' : 'none',
-            }}
-          >
-            <LayoutGrid className="h-3.5 w-3.5" /> Board
-          </button>
-          <button
-            onClick={() => setView('list')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-            style={{
-              background: view === 'list' ? '#fff' : 'transparent',
-              color: view === 'list' ? 'var(--pm-text)' : 'var(--pm-text-3)',
-              boxShadow: view === 'list' ? 'var(--pm-shadow-xs)' : 'none',
-            }}
-          >
-            <List className="h-3.5 w-3.5" /> List
-          </button>
+          {(['board', 'list'] as const).map(v => (
+            <button
+              key={v}
+              onClick={() => setView(v)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all capitalize"
+              style={{
+                background: view === v ? '#fff' : 'transparent',
+                color: view === v ? 'var(--pm-text)' : 'var(--pm-text-3)',
+                boxShadow: view === v ? 'var(--pm-shadow-xs)' : 'none',
+              }}
+            >
+              {v === 'board' ? <LayoutGrid className="h-3.5 w-3.5" /> : <List className="h-3.5 w-3.5" />}
+              {v.charAt(0).toUpperCase() + v.slice(1)}
+            </button>
+          ))}
         </div>
 
         {isAdmin && (
@@ -231,19 +232,25 @@ export default function TaskList({ tasks: initialTasks, projectId, onUpdate, isA
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {COLUMNS.map(col => {
             const colTasks = tasks.filter(t => col.statuses.includes(t.status))
+            const isOver = dragOverCol === col.id
+
             return (
               <div
                 key={col.id}
-                onDragOver={e => { e.preventDefault(); setDragOver(col.id) }}
-                onDragLeave={() => setDragOver(null)}
-                onDrop={() => onDrop(col.id)}
-                className="flex flex-col rounded-2xl p-3 min-h-[200px] transition-colors"
+                onDragOver={(e) => { e.preventDefault() }}
+                onDragEnter={(e) => { e.preventDefault(); if (draggingId) setDragOverCol(col.id) }}
+                onDragLeave={(e) => {
+                  // Only clear if pointer truly left this column (not just moved to a child)
+                  if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverCol(null)
+                }}
+                onDrop={(e) => { e.preventDefault(); handleDrop(col.id) }}
+                className="flex flex-col rounded-2xl p-3 min-h-[200px]"
                 style={{
-                  background: dragOver === col.id ? col.bg : 'var(--pm-bg)',
-                  border: `1.5px solid ${dragOver === col.id ? col.color + '40' : 'var(--pm-border)'}`,
+                  background: isOver ? col.bg : 'var(--pm-bg)',
+                  border: `1.5px solid ${isOver ? col.color + '60' : 'var(--pm-border)'}`,
+                  transition: 'background 0.15s, border-color 0.15s',
                 }}
               >
-                {/* Column header */}
                 <div className="flex items-center justify-between mb-3 px-1">
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full" style={{ background: col.color }} />
@@ -257,17 +264,18 @@ export default function TaskList({ tasks: initialTasks, projectId, onUpdate, isA
                   </span>
                 </div>
 
-                {/* Cards */}
                 <div className="flex flex-col gap-2 flex-1">
                   {colTasks.length === 0 ? (
                     <div
                       className="flex-1 flex items-center justify-center rounded-xl border-2 border-dashed py-8"
-                      style={{ borderColor: 'var(--pm-border)' }}
+                      style={{ borderColor: isOver ? col.color + '60' : 'var(--pm-border)' }}
                     >
-                      <p className="text-xs" style={{ color: 'var(--pm-text-3)' }}>No tasks</p>
+                      <p className="text-xs" style={{ color: 'var(--pm-text-3)' }}>
+                        {isOver ? `Drop here` : 'No tasks'}
+                      </p>
                     </div>
                   ) : (
-                    colTasks.map(task => <TaskCard key={task.id} task={task} />)
+                    colTasks.map(task => renderCard(task))
                   )}
                 </div>
               </div>
@@ -287,12 +295,12 @@ export default function TaskList({ tasks: initialTasks, projectId, onUpdate, isA
             tasks.map(task => {
               const priorityColor = PRIORITY_COLORS[task.priority] ?? '#6B7280'
               const done = task.status === 'done'
-              const overdue = task.due_date && isOverdue(task.due_date) && !done
+              const overdue = !!(task.due_date && isOverdue(task.due_date) && !done)
 
               return (
                 <div
                   key={task.id}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all"
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl"
                   style={{
                     background: 'var(--pm-card)',
                     border: '1px solid var(--pm-border)',
