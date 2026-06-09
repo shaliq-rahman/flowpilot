@@ -36,17 +36,18 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [tab, setTab] = useState<Tab>('tasks')
 
   async function loadProject() {
-    const [projRes, docsRes] = await Promise.all([
-      fetch(`/api/projects/${id}`),
-      fetch(`/api/documents?project_id=${id}`),
-    ])
+    const projRes = await fetch(`/api/projects/${id}`)
     if (!projRes.ok) { router.push('/projects'); return }
     const data = await projRes.json()
     setProject(data)
     setTasks(Array.isArray(data.tasks) ? data.tasks : [])
     setMilestones(Array.isArray(data.milestones) ? data.milestones : [])
-    if (docsRes.ok) setDocuments(await docsRes.json())
     setLoading(false)
+    // load docs separately so it never blocks the main page
+    fetch(`/api/documents?project_id=${id}`)
+      .then(r => r.ok ? r.json() : [])
+      .then(docs => setDocuments(Array.isArray(docs) ? docs : []))
+      .catch(() => {})
   }
 
   useEffect(() => { loadProject() }, [id])

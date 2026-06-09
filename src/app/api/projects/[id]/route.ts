@@ -11,9 +11,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const admin = createAdminClient()
   const { data, error } = await admin
     .from('projects')
-    .select('*, tasks(*), milestones(*)')
+    .select('*, tasks(*), milestones(* order(due_date asc))')
     .eq('id', id)
-    .eq('owner_id', user.id)
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 404 })
