@@ -1,3 +1,4 @@
+import { createAdminClient } from '@/lib/supabase/server'
 import { createClient } from '@/lib/supabase/server'
 import { FolderKanban, CheckSquare, AlertCircle, TrendingUp, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
@@ -11,13 +12,15 @@ const STATUS_COLORS: Record<string, string> = {
 export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+
+  const admin = createAdminClient()
 
   const [{ data: projects }, { data: tasks }, { data: overdueTasks }] = await Promise.all([
-    supabase.from('projects').select('*, tasks(count)').eq('owner_id', user!.id).order('created_at', { ascending: false }),
-    supabase.from('tasks').select('id, status, project_id, projects!inner(owner_id)').eq('projects.owner_id', user!.id),
-    supabase.from('tasks')
-      .select('id, title, due_date, priority, project_id, projects!inner(name, owner_id)')
-      .eq('projects.owner_id', user!.id)
+    admin.from('projects').select('*, tasks(count)').order('created_at', { ascending: false }),
+    admin.from('tasks').select('id, status, project_id'),
+    admin.from('tasks')
+      .select('id, title, due_date, priority, project_id, projects(name)')
       .neq('status', 'done').neq('status', 'cancelled')
       .lt('due_date', new Date().toISOString().split('T')[0])
       .order('due_date').limit(5),
@@ -178,7 +181,7 @@ export default async function DashboardPage() {
                     <div className="min-w-0">
                       <p className="text-sm font-medium truncate" style={{ color: 'var(--pm-text)' }}>{t.title}</p>
                       <p className="text-xs mt-0.5" style={{ color: 'var(--pm-text-3)' }}>
-                        {(t.projects as unknown as { name: string })?.name}
+                        {(t.projects as unknown as { name: string } | null)?.name}
                       </p>
                     </div>
                     <span className="text-[11px] font-semibold flex-shrink-0" style={{ color: '#DC2626' }}>
