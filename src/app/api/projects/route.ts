@@ -8,12 +8,12 @@ export async function GET() {
   if (error) return error
 
   const admin = createAdminClient()
-  const { data, err } = await admin
+  const { data, error: fetchErr } = await admin
     .from('projects')
     .select('*, tasks(count), milestones(count)')
-    .order('created_at', { ascending: false }) as any
+    .order('created_at', { ascending: false })
 
-  if (err) return NextResponse.json({ error: err.message }, { status: 500 })
+  if (fetchErr) return NextResponse.json({ error: fetchErr.message }, { status: 500 })
   return NextResponse.json(data)
 }
 

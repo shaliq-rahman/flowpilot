@@ -11,7 +11,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const admin = createAdminClient()
   const { data, error: fetchErr } = await admin
     .from('projects')
-    .select('*, tasks(*), milestones(* order(due_date asc))')
+    .select('*, tasks(*), milestones(*)')
     .eq('id', id)
     .single()
 
@@ -34,7 +34,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const { data: updated } = await admin
     .from('projects')
-    .select('*, tasks(*), milestones(* order(due_date asc))')
+    .select('*, tasks(*), milestones(*)')
     .eq('id', id)
     .single()
 
