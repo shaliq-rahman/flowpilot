@@ -1,11 +1,10 @@
 'use client'
 
-import Link from 'next/link'
-import Image from 'next/image'
-import { formatDate, humanizeStatus } from '@/lib/utils'
+import { formatDate } from '@/lib/utils'
 import { CheckSquare, Flag, CalendarRange } from 'lucide-react'
 import { Project } from '@/types'
 import { useState } from 'react'
+import Link from 'next/link'
 
 const STATUS_CONFIG: Record<string, { color: string; bg: string; label: string }> = {
   planning:  { color: '#6B7280', bg: '#F3F4F6', label: 'Planning' },
@@ -33,41 +32,40 @@ export default function ProjectCard({ project }: ProjectCardProps) {
   const [logoErr, setLogoErr] = useState(false)
   const taskCount      = (project.tasks as unknown as [{ count: number }])?.[0]?.count ?? 0
   const milestoneCount = (project.milestones as unknown as [{ count: number }])?.[0]?.count ?? 0
-  const pct         = Math.round(project.completion_pct)
-  const cfg         = STATUS_CONFIG[project.status] ?? STATUS_CONFIG.planning
-  const barColor    = pct >= 80 ? '#16A34A' : project.color
-  const accent      = project.color
+  const pct     = Math.round(project.completion_pct)
+  const cfg     = STATUS_CONFIG[project.status] ?? STATUS_CONFIG.planning
+  const accent  = project.color
+  const barColor = pct >= 80 ? '#16A34A' : accent
 
   return (
-    <Link href={`/projects/${project.id}`} className="block group">
+    <Link href={`/projects/${project.id}`} className="block h-full">
       <div
-        className="rounded-2xl overflow-hidden transition-all duration-200"
+        className="rounded-2xl h-full flex flex-col transition-all duration-200 cursor-pointer"
         style={{
           background: '#fff',
-          border: '1px solid var(--pm-border)',
-          boxShadow: 'var(--pm-shadow-xs)',
+          border: '1.5px solid #000',
+          boxShadow: 'none',
         }}
         onMouseEnter={e => {
-          const el = e.currentTarget as HTMLElement
-          el.style.boxShadow = '0 8px 30px rgba(0,0,0,0.10)'
-          el.style.transform = 'translateY(-2px)'
+          (e.currentTarget as HTMLElement).style.boxShadow = '4px 4px 0px #000'
+          ;(e.currentTarget as HTMLElement).style.transform = 'translate(-2px,-2px)'
         }}
         onMouseLeave={e => {
-          const el = e.currentTarget as HTMLElement
-          el.style.boxShadow = 'var(--pm-shadow-xs)'
-          el.style.transform = 'translateY(0)'
+          (e.currentTarget as HTMLElement).style.boxShadow = 'none'
+          ;(e.currentTarget as HTMLElement).style.transform = 'translate(0,0)'
         }}
       >
-        {/* Colour accent bar */}
-        <div className="h-1 w-full" style={{ background: accent }} />
+        <div className="p-5 flex flex-col flex-1">
 
-        <div className="p-5">
-          {/* Logo + name row */}
-          <div className="flex items-center gap-3.5 mb-4">
-            {/* Logo / Avatar */}
+          {/* Logo + name */}
+          <div className="flex items-center gap-3 mb-4">
+            {/* Rounded logo / initials */}
             <div
-              className="w-12 h-12 rounded-xl flex-shrink-0 overflow-hidden flex items-center justify-center text-white text-sm font-bold"
-              style={{ background: logoErr ? accent : 'transparent', border: `1.5px solid ${accent}20` }}
+              className="w-11 h-11 rounded-full flex-shrink-0 overflow-hidden flex items-center justify-center text-white text-sm font-bold"
+              style={{
+                background: logoErr ? accent : '#f0f0f0',
+                border: '1.5px solid #000',
+              }}
             >
               {!logoErr ? (
                 <img
@@ -77,22 +75,19 @@ export default function ProjectCard({ project }: ProjectCardProps) {
                   onError={() => setLogoErr(true)}
                 />
               ) : (
-                <span style={{ textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>
-                  {getInitials(project.name)}
-                </span>
+                <span style={{ color: '#fff', fontSize: '13px' }}>{getInitials(project.name)}</span>
               )}
             </div>
 
-            {/* Name + status */}
             <div className="min-w-0 flex-1">
               <h3
-                className="font-bold leading-tight mb-1 truncate"
-                style={{ fontSize: '1rem', color: 'var(--pm-text)', letterSpacing: '-0.01em' }}
+                className="font-bold leading-tight truncate"
+                style={{ fontSize: '1rem', color: '#000', letterSpacing: '-0.01em' }}
               >
                 {project.name}
               </h3>
               <span
-                className="inline-flex items-center text-[10px] px-2 py-0.5 rounded-full font-semibold"
+                className="inline-flex items-center text-[10px] px-2 py-0.5 rounded-full font-semibold mt-0.5"
                 style={{ background: cfg.bg, color: cfg.color }}
               >
                 {cfg.label}
@@ -100,57 +95,48 @@ export default function ProjectCard({ project }: ProjectCardProps) {
             </div>
           </div>
 
-          {/* Description */}
-          {project.description && (
-            <p
-              className="text-xs mb-4 line-clamp-2 leading-relaxed"
-              style={{ color: 'var(--pm-text-3)' }}
-            >
-              {project.description}
-            </p>
-          )}
+          {/* Description — always 2 lines reserved so cards stay same height */}
+          <p
+            className="text-xs leading-relaxed mb-4 line-clamp-2"
+            style={{ color: '#666', minHeight: '2.5em' }}
+          >
+            {project.description ?? ''}
+          </p>
 
-          {/* Date range — highlighted */}
-          {(project.start_date || project.end_date) && (
-            <div
-              className="flex items-center gap-2 px-3 py-2 rounded-xl mb-4 text-xs font-medium"
-              style={{ background: accent + '0d', border: `1px solid ${accent}25` }}
-            >
-              <CalendarRange className="h-3.5 w-3.5 flex-shrink-0" style={{ color: accent }} />
-              <span style={{ color: accent }}>
-                {project.start_date ? formatDate(project.start_date) : '—'}
-                {' → '}
-                {project.end_date ? formatDate(project.end_date) : 'Ongoing'}
-              </span>
-            </div>
-          )}
+          {/* Date range */}
+          <div
+            className="flex items-center gap-2 px-3 py-2 rounded-lg mb-4 text-xs font-medium"
+            style={{ background: '#F8F8F8', border: '1px solid #E5E5E5' }}
+          >
+            <CalendarRange className="h-3.5 w-3.5 flex-shrink-0 text-gray-400" />
+            <span style={{ color: '#444' }}>
+              {project.start_date ? formatDate(project.start_date) : '—'}
+              <span className="mx-1.5 text-gray-300">→</span>
+              {project.end_date ? formatDate(project.end_date) : 'Ongoing'}
+            </span>
+          </div>
 
-          {/* Progress */}
-          <div className="mb-4">
+          {/* Progress — pushed to bottom */}
+          <div className="mt-auto">
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[10px] font-medium" style={{ color: 'var(--pm-text-3)' }}>Progress</span>
+              <span className="text-[10px] font-medium text-gray-400">Progress</span>
               <span className="text-[11px] font-bold" style={{ color: barColor }}>{pct}%</span>
             </div>
-            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: accent + '18' }}>
+            <div className="h-1.5 rounded-full overflow-hidden bg-gray-100">
               <div
                 className="h-full rounded-full transition-all duration-500"
                 style={{ width: `${pct}%`, background: barColor }}
               />
             </div>
-          </div>
 
-          {/* Footer counts */}
-          <div
-            className="flex items-center justify-between pt-3"
-            style={{ borderTop: `1px solid ${accent}20` }}
-          >
-            <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1.5 text-[11px] font-medium" style={{ color: 'var(--pm-text-3)' }}>
-                <CheckSquare className="h-3 w-3" style={{ color: accent }} />
+            {/* Footer */}
+            <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-100">
+              <span className="flex items-center gap-1.5 text-[11px] font-medium text-gray-400">
+                <CheckSquare className="h-3 w-3" />
                 <span className="stat-num">{taskCount}</span> tasks
               </span>
-              <span className="flex items-center gap-1.5 text-[11px] font-medium" style={{ color: 'var(--pm-text-3)' }}>
-                <Flag className="h-3 w-3" style={{ color: accent }} />
+              <span className="flex items-center gap-1.5 text-[11px] font-medium text-gray-400">
+                <Flag className="h-3 w-3" />
                 <span className="stat-num">{milestoneCount}</span> milestones
               </span>
             </div>
