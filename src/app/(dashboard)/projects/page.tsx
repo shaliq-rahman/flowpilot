@@ -5,8 +5,10 @@ import { Project } from '@/types'
 import ProjectCard from '@/components/projects/ProjectCard'
 import ProjectForm from '@/components/projects/ProjectForm'
 import { Plus, Search } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function ProjectsPage() {
+  const { isAdmin } = useAuth()
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -39,12 +41,11 @@ export default function ProjectsPage() {
             {projects.length} project{projects.length !== 1 ? 's' : ''}
           </p>
         </div>
-        <button
-          onClick={() => setFormOpen(true)}
-          className="fp-btn fp-btn-amber"
-        >
-          <Plus className="h-4 w-4" /> New Project
-        </button>
+        {isAdmin && (
+          <button onClick={() => setFormOpen(true)} className="fp-btn fp-btn-amber">
+            <Plus className="h-4 w-4" /> New Project
+          </button>
+        )}
       </div>
 
       {/* Search */}
@@ -75,9 +76,9 @@ export default function ProjectsPage() {
             {search ? 'No matching projects' : 'No projects yet'}
           </p>
           <p className="text-xs mb-5" style={{ color: 'var(--pm-text-3)' }}>
-            {search ? 'Try a different search term' : 'Create your first project to get started'}
+            {search ? 'Try a different search term' : 'No projects available'}
           </p>
-          {!search && (
+          {!search && isAdmin && (
             <button onClick={() => setFormOpen(true)} className="fp-btn fp-btn-amber">
               <Plus className="h-4 w-4" /> New Project
             </button>
@@ -91,11 +92,13 @@ export default function ProjectsPage() {
         </div>
       )}
 
-      <ProjectForm
-        open={formOpen}
-        onClose={() => setFormOpen(false)}
-        onSuccess={(p) => setProjects((prev) => [p, ...prev])}
-      />
+      {isAdmin && (
+        <ProjectForm
+          open={formOpen}
+          onClose={() => setFormOpen(false)}
+          onSuccess={(p) => setProjects((prev) => [p, ...prev])}
+        />
+      )}
     </div>
   )
 }

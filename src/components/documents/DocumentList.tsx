@@ -10,6 +10,7 @@ import DocumentViewer from './DocumentViewer'
 interface DocumentListProps {
   projectId: string
   initialDocs: Document[]
+  isAdmin?: boolean
 }
 
 function fileIcon(type: string) {
@@ -38,7 +39,7 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-export default function DocumentList({ projectId, initialDocs }: DocumentListProps) {
+export default function DocumentList({ projectId, initialDocs, isAdmin = false }: DocumentListProps) {
   const [docs, setDocs] = useState<Document[]>(initialDocs)
   const [viewing, setViewing] = useState<Document | null>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
@@ -62,7 +63,7 @@ export default function DocumentList({ projectId, initialDocs }: DocumentListPro
   return (
     <>
       <div className="space-y-4">
-        <DocumentUpload projectId={projectId} onUploaded={onUploaded} />
+        {isAdmin && <DocumentUpload projectId={projectId} onUploaded={onUploaded} />}
 
         {docs.length === 0 ? (
           <p className="text-center py-6 text-sm" style={{ color: 'var(--pm-text-3)' }}>
@@ -101,14 +102,16 @@ export default function DocumentList({ projectId, initialDocs }: DocumentListPro
                   >
                     <Eye className="h-3 w-3" /> View
                   </button>
-                  <button
-                    onClick={() => onDelete(doc.id)}
-                    disabled={deleting === doc.id}
-                    className="p-1.5 rounded-lg transition-colors"
-                    style={{ color: 'var(--pm-text-3)' }}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                  {isAdmin && (
+                    <button
+                      onClick={() => onDelete(doc.id)}
+                      disabled={deleting === doc.id}
+                      className="p-1.5 rounded-lg transition-colors"
+                      style={{ color: 'var(--pm-text-3)' }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

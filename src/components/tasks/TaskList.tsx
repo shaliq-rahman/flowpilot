@@ -20,6 +20,7 @@ interface TaskListProps {
   tasks: Task[]
   projectId: string
   onUpdate: () => void
+  isAdmin?: boolean
 }
 
 const selectStyle = {
@@ -33,7 +34,7 @@ const selectStyle = {
   cursor: 'pointer',
 }
 
-export default function TaskList({ tasks: initialTasks, projectId, onUpdate }: TaskListProps) {
+export default function TaskList({ tasks: initialTasks, projectId, onUpdate, isAdmin = false }: TaskListProps) {
   const [tasks, setTasks] = useState(initialTasks)
   const [formOpen, setFormOpen] = useState(false)
   const [editTask, setEditTask] = useState<Task | null>(null)
@@ -89,13 +90,15 @@ export default function TaskList({ tasks: initialTasks, projectId, onUpdate }: T
             ))}
           </select>
         </div>
-        <button
-          onClick={() => { setEditTask(null); setFormOpen(true) }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
-          style={{ background: 'var(--pm-accent)', color: '#000' }}
-        >
-          <Plus className="h-3.5 w-3.5" /> Add Task
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() => { setEditTask(null); setFormOpen(true) }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
+            style={{ background: 'var(--pm-accent)', color: '#fff' }}
+          >
+            <Plus className="h-3.5 w-3.5" /> Add Task
+          </button>
+        )}
       </div>
 
       {/* Task list */}
@@ -179,29 +182,31 @@ export default function TaskList({ tasks: initialTasks, projectId, onUpdate }: T
                   </div>
                 </div>
 
-                {/* Actions */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="flex-shrink-0 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--pm-text-3)' }}>
-                      <MoreHorizontal className="h-4 w-4" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="text-sm">
-                    <DropdownMenuItem onClick={() => { setEditTask(task); setFormOpen(true) }}>
-                      <Pencil className="h-3.5 w-3.5 mr-2" /> Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="text-red-600" onClick={() => deleteTask(task.id)}>
-                      <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                {/* Actions — admin only */}
+                {isAdmin && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="flex-shrink-0 p-1 rounded transition-opacity" style={{ color: 'var(--pm-text-3)' }}>
+                        <MoreHorizontal className="h-4 w-4" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="text-sm">
+                      <DropdownMenuItem onClick={() => { setEditTask(task); setFormOpen(true) }}>
+                        <Pencil className="h-3.5 w-3.5 mr-2" /> Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="text-red-600" onClick={() => deleteTask(task.id)}>
+                        <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
               </div>
             )
           })
         )}
       </div>
 
-      <TaskForm
+      {isAdmin && <TaskForm
         open={formOpen}
         onClose={() => { setFormOpen(false); setEditTask(null) }}
         onSuccess={handleTaskSaved}
@@ -218,7 +223,7 @@ export default function TaskList({ tasks: initialTasks, projectId, onUpdate }: T
           estimated_hours: editTask.estimated_hours ?? undefined,
           project_id: projectId,
         } : undefined}
-      />
+      />}
     </div>
   )
 }

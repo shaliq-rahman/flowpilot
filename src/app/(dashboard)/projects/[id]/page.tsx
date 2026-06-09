@@ -14,6 +14,7 @@ import TimelineView from '@/components/timeline/TimelineView'
 import ProjectForm from '@/components/projects/ProjectForm'
 import AIAssistantPanel from '@/components/ai/AIAssistantPanel'
 import DocumentList from '@/components/documents/DocumentList'
+import { useAuth } from '@/contexts/AuthContext'
 
 const STATUS_COLORS: Record<string, string> = {
   planning: '#6B7280', active: '#2563EB', on_hold: '#D97706',
@@ -26,6 +27,7 @@ type Tab = typeof TABS[number]
 export default function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
+  const { isAdmin } = useAuth()
   const [project, setProject] = useState<Project | null>(null)
   const [tasks, setTasks] = useState<Task[]>([])
   const [milestones, setMilestones] = useState<Milestone[]>([])
@@ -144,41 +146,43 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
           </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-shrink-0 mt-1">
-          <button
-            onClick={() => setAiOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all"
-            style={{ border: '1px solid var(--pm-border)', color: 'var(--pm-text-2)', background: '#fff' }}
-            onMouseEnter={(e) => {
-              ;(e.currentTarget as HTMLElement).style.borderColor = 'var(--pm-accent)'
-              ;(e.currentTarget as HTMLElement).style.color = 'var(--pm-accent-dark)'
-            }}
-            onMouseLeave={(e) => {
-              ;(e.currentTarget as HTMLElement).style.borderColor = 'var(--pm-border)'
-              ;(e.currentTarget as HTMLElement).style.color = 'var(--pm-text-2)'
-            }}
-          >
-            <Sparkles className="h-3.5 w-3.5" /> AI
-          </button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                className="p-2 rounded-xl transition-colors"
-                style={{ border: '1px solid var(--pm-border)', color: 'var(--pm-text-3)', background: '#fff' }}
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setEditOpen(true)}>
-                <Pencil className="h-3.5 w-3.5 mr-2" /> Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem className="text-red-600" onClick={handleDelete}>
-                <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        {isAdmin && (
+          <div className="flex items-center gap-2 flex-shrink-0 mt-1">
+            <button
+              onClick={() => setAiOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all"
+              style={{ border: '1px solid var(--pm-border)', color: 'var(--pm-text-2)', background: '#fff' }}
+              onMouseEnter={(e) => {
+                ;(e.currentTarget as HTMLElement).style.borderColor = 'var(--pm-accent)'
+                ;(e.currentTarget as HTMLElement).style.color = 'var(--pm-accent-dark)'
+              }}
+              onMouseLeave={(e) => {
+                ;(e.currentTarget as HTMLElement).style.borderColor = 'var(--pm-border)'
+                ;(e.currentTarget as HTMLElement).style.color = 'var(--pm-text-2)'
+              }}
+            >
+              <Sparkles className="h-3.5 w-3.5" /> AI
+            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="p-2 rounded-xl transition-colors"
+                  style={{ border: '1px solid var(--pm-border)', color: 'var(--pm-text-3)', background: '#fff' }}
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setEditOpen(true)}>
+                  <Pencil className="h-3.5 w-3.5 mr-2" /> Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem className="text-red-600" onClick={handleDelete}>
+                  <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
       </div>
 
       {/* Stat strip */}
@@ -223,8 +227,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       </div>
 
       {/* Tab content */}
-      {tab === 'tasks' && <TaskList tasks={tasks} projectId={id} onUpdate={loadProject} />}
-      {tab === 'milestones' && <MilestoneList milestones={milestones} projectId={id} onUpdate={loadProject} />}
+      {tab === 'tasks' && <TaskList tasks={tasks} projectId={id} onUpdate={loadProject} isAdmin={isAdmin} />}
+      {tab === 'milestones' && <MilestoneList milestones={milestones} projectId={id} onUpdate={loadProject} isAdmin={isAdmin} />}
       {tab === 'timeline' && (
         <div className="rounded-2xl p-6 bg-white" style={{ border: '1px solid var(--pm-border)' }}>
           <p className="text-sm font-semibold mb-6" style={{ color: 'var(--pm-text)' }}>Timeline</p>
@@ -234,7 +238,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       {tab === 'documents' && (
         <div className="rounded-2xl p-6 bg-white" style={{ border: '1px solid var(--pm-border)' }}>
           <p className="text-sm font-semibold mb-6" style={{ color: 'var(--pm-text)' }}>Documents</p>
-          <DocumentList projectId={id} initialDocs={documents} />
+          <DocumentList projectId={id} initialDocs={documents} isAdmin={isAdmin} />
         </div>
       )}
 

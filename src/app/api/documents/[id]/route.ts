@@ -1,29 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, createAdminClient } from '@/lib/supabase/server'
-
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const admin = createAdminClient()
-  const { data: doc } = await admin.from('documents').select('file_path').eq('id', id).single()
-
-  if (doc) {
-    await admin.storage.from('project-documents').remove([doc.file_path])
-  }
-
-  const { error } = await admin.from('documents').delete().eq('id', id)
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ success: true })
-}
+import { createAdminClient } from '@/lib/supabase/server'
+import { requireAuth, requireAdmin } from '@/lib/auth-guard'
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { error } = await requireAuth()
+  if (error) return error
 
   const admin = createAdminClient()
   const { data: doc } = await admin.from('documents').select('file_path, name').eq('id', id).single()
@@ -34,4 +16,18 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     .createSignedUrl(doc.file_path, 3600)
 
   return NextResponse.json({ url: signedUrl?.signedUrl, name: doc.name })
+}
+
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const { error } = await requireAdmin()
+  if (error) return error
+
+  const admin = createAdminClient()
+  const { data: doc } = await admin.from('documents').select('file_path').eq('id', id).single()
+  if (doc) await admin.storage.from('project-documents').remove([doc.file_path])
+
+  const { error: deleteErr } = await admin.from('documents').delete().eq('id', id)
+  if (deleteErr) return NextResponse.json({ error: deleteErr.message }, { status: 500 })
+  return NextResponse.json({ success: true })
 }

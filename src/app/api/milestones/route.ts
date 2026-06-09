@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
+import { requireAuth, requireAdmin } from '@/lib/auth-guard'
 import { milestoneSchema } from '@/lib/validations'
 
 export async function GET(req: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { error } = await requireAuth()
+  if (error) return error
 
   const projectId = req.nextUrl.searchParams.get('project_id')
   const admin = createAdminClient()
@@ -13,23 +13,22 @@ export async function GET(req: NextRequest) {
   if (projectId) query = query.eq('project_id', projectId)
   query = query.order('due_date')
 
-  const { data, error } = await query
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  const { data, error: fetchErr } = await query
+  if (fetchErr) return NextResponse.json({ error: fetchErr.message }, { status: 500 })
   return NextResponse.json(data)
 }
 
 export async function POST(req: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { error } = await requireAdmin()
+  if (error) return error
 
   const body = await req.json()
   const parsed = milestoneSchema.safeParse(body)
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
 
   const admin = createAdminClient()
-  const { error } = await admin.from('milestones').insert(parsed.data)
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  const { error: insertErr } = await admin.from('milestones').insert(parsed.data)
+  if (insertErr) return NextResponse.json({ error: insertErr.message }, { status: 500 })
 
   const { data: created } = await admin
     .from('milestones')

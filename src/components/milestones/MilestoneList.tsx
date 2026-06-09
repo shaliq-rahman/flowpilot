@@ -19,9 +19,10 @@ interface MilestoneListProps {
   milestones: Milestone[]
   projectId: string
   onUpdate: () => void
+  isAdmin?: boolean
 }
 
-export default function MilestoneList({ milestones: initial, projectId, onUpdate }: MilestoneListProps) {
+export default function MilestoneList({ milestones: initial, projectId, onUpdate, isAdmin = false }: MilestoneListProps) {
   const [milestones, setMilestones] = useState(initial)
   const [formOpen, setFormOpen] = useState(false)
   const [editMilestone, setEditMilestone] = useState<Milestone | null>(null)
@@ -59,15 +60,17 @@ export default function MilestoneList({ milestones: initial, projectId, onUpdate
 
   return (
     <div>
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={() => { setEditMilestone(null); setFormOpen(true) }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
-          style={{ background: 'var(--pm-accent)', color: '#000' }}
-        >
-          <Plus className="h-3.5 w-3.5" /> Add Milestone
-        </button>
-      </div>
+      {isAdmin && (
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={() => { setEditMilestone(null); setFormOpen(true) }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
+            style={{ background: 'var(--pm-accent)', color: '#fff' }}
+          >
+            <Plus className="h-3.5 w-3.5" /> Add Milestone
+          </button>
+        </div>
+      )}
 
       {milestones.length === 0 ? (
         <div className="text-center py-10" style={{ color: 'var(--pm-text-3)' }}>
@@ -134,21 +137,23 @@ export default function MilestoneList({ milestones: initial, projectId, onUpdate
                           {cfg.label}
                         </span>
                       </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button className="p-1 rounded" style={{ color: 'var(--pm-text-3)' }}>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => { setEditMilestone(m); setFormOpen(true) }}>
-                            <Pencil className="h-3.5 w-3.5 mr-2" /> Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600" onClick={() => deleteMilestone(m.id)}>
-                            <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      {isAdmin && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="p-1 rounded" style={{ color: 'var(--pm-text-3)' }}>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => { setEditMilestone(m); setFormOpen(true) }}>
+                              <Pencil className="h-3.5 w-3.5 mr-2" /> Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-red-600" onClick={() => deleteMilestone(m.id)}>
+                              <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -158,7 +163,7 @@ export default function MilestoneList({ milestones: initial, projectId, onUpdate
         </div>
       )}
 
-      <MilestoneForm
+      {isAdmin && <MilestoneForm
         open={formOpen}
         onClose={() => { setFormOpen(false); setEditMilestone(null) }}
         onSuccess={handleSaved}
@@ -170,7 +175,7 @@ export default function MilestoneList({ milestones: initial, projectId, onUpdate
           due_date: editMilestone.due_date,
           project_id: projectId,
         } : undefined}
-      />
+      />}
     </div>
   )
 }
