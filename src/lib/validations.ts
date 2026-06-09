@@ -25,6 +25,7 @@ export const milestoneSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200),
   description: z.string().optional().nullable(),
   due_date: z.string().min(1, 'Due date is required'),
+  status: z.enum(['upcoming', 'at_risk', 'completed', 'missed']).default('upcoming'),
   project_id: z.string().uuid(),
 })
 
